@@ -10,13 +10,23 @@ use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
+    private function withImage(Item $item): array
+    {
+        $data                = $item->load('category')->toArray();
+        $data['image_url']   = $item->getFirstMediaUrl('image') ?: null;
+        $data['image_thumb'] = $item->getFirstMediaUrl('image', 'thumb') ?: null;
+        return $data;
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Item::with('category');
 
         if ($request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%')
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('barcode', $request->search);
+            });
         }
 
         if ($request->category_id) {
@@ -27,7 +37,16 @@ class ItemController extends Controller
             $query->where('stock', '<=', 10);
         }
 
-        return response()->json($query->latest()->paginate(20));
+        $paginated = $query->latest()->paginate(20);
+
+        $paginated->getCollection()->transform(function (Item $item) {
+            $arr                = $item->toArray();
+            $arr['image_url']   = $item->getFirstMediaUrl('image') ?: null;
+            $arr['image_thumb'] = $item->getFirstMediaUrl('image', 'thumb') ?: null;
+            return $arr;
+        });
+
+        return response()->json($paginated);
     }
 
     public function store(Request $request): JsonResponse
@@ -42,12 +61,16 @@ class ItemController extends Controller
 
         $item = Item::create($data);
 
-        return response()->json($item->load('category'), 201);
+        if ($request->hasFile('image')) {
+            $item->addMediaFromRequest('image')->toMediaCollection('image');
+        }
+
+        return response()->json($this->withImage($item), 201);
     }
 
     public function show(Item $item): JsonResponse
     {
-        return response()->json($item->load('category'));
+        return response()->json($this->withImage($item));
     }
 
     public function update(Request $request, Item $item): JsonResponse
@@ -62,7 +85,25 @@ class ItemController extends Controller
 
         $item->update($data);
 
-        return response()->json($item->load('category'));
+        return response()->json($this->withImage($item));
+    }
+
+    public function uploadImage(Request $request, Item $item): JsonResponse
+    {
+        $request->validate(['image' => 'required|image|mimes:jpeg,png,webp|max:2048']);
+
+        $media = $item->addMediaFromRequest('image')->toMediaCollection('image');
+
+        return response()->json([
+            'image_url'   => $media->getUrl(),
+            'image_thumb' => $media->getUrl('thumb'),
+        ]);
+    }
+
+    public function deleteImage(Item $item): JsonResponse
+    {
+        $item->clearMediaCollection('image');
+        return response()->json(['image_url' => null, 'image_thumb' => null]);
     }
 
     public function destroy(Item $item): JsonResponse
@@ -95,6 +136,6 @@ class ItemController extends Controller
             'note'     => $data['note'] ?? null,
         ]);
 
-        return response()->json($item->load('category'));
+        return response()->json($this->withImage($item));
     }
 }

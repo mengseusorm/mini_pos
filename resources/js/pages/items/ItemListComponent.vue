@@ -1,8 +1,8 @@
-<!-- Moved to pages/items/ItemListComponent.vue -->
-<template><ItemListComponent /></template>
-<script setup>
-import ItemListComponent from './items/ItemListComponent.vue';
-</script>
+<template>
+  <div class="p-6 space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Items</h1>
         <p class="text-muted-foreground text-sm">Manage your product catalog</p>
       </div>
       <Button @click="openModal()">
@@ -52,9 +52,7 @@ import ItemListComponent from './items/ItemListComponent.vue';
             <TableCell>{{ item.category?.name }}</TableCell>
             <TableCell>Rp {{ fmt(item.price) }}</TableCell>
             <TableCell>
-              <Badge :variant="item.stock <= 10 ? 'destructive' : 'secondary'">
-                {{ item.stock }}
-              </Badge>
+              <Badge :variant="item.stock <= 10 ? 'destructive' : 'secondary'">{{ item.stock }}</Badge>
             </TableCell>
             <TableCell class="text-muted-foreground">{{ item.barcode || '—' }}</TableCell>
             <TableCell class="pr-6">
@@ -72,50 +70,12 @@ import ItemListComponent from './items/ItemListComponent.vue';
       </Table>
     </Card>
 
-    <!-- Add / Edit Dialog -->
-    <Dialog :open="showModal" @update:open="val => showModal = val">
-      <DialogContent class="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{{ editing ? 'Edit' : 'Add' }} Item</DialogTitle>
-        </DialogHeader>
-        <form @submit.prevent="saveItem" class="space-y-4 pt-2">
-          <div class="space-y-2">
-            <Label>Name</Label>
-            <Input v-model="form.name" required placeholder="Item name" />
-          </div>
-          <div class="space-y-2">
-            <Label>Category</Label>
-            <Select v-model="form.category_id">
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="space-y-2">
-              <Label>Price</Label>
-              <Input v-model.number="form.price" type="number" min="0" required />
-            </div>
-            <div class="space-y-2">
-              <Label>Stock</Label>
-              <Input v-model.number="form.stock" type="number" min="0" required />
-            </div>
-          </div>
-          <div class="space-y-2">
-            <Label>Barcode <span class="text-muted-foreground font-normal">(optional)</span></Label>
-            <Input v-model="form.barcode" />
-          </div>
-          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
-          <DialogFooter class="gap-2 pt-2">
-            <Button type="button" variant="outline" @click="showModal = false">Cancel</Button>
-            <Button type="submit">Save</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <ItemCreateComponent
+      v-model:open="showModal"
+      :editing="editingItem"
+      :categories="categories"
+      @saved="fetchItems"
+    />
   </div>
 </template>
 
@@ -125,13 +85,12 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-vue-next';
 import api from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ItemCreateComponent from './ItemCreateComponent.vue';
 
 const items          = ref([]);
 const categories     = ref([]);
@@ -140,9 +99,7 @@ const search         = ref('');
 const categoryFilter = ref('all');
 const lowStock       = ref(false);
 const showModal      = ref(false);
-const editing        = ref(null);
-const formError      = ref('');
-const form           = ref({ name: '', category_id: '', price: 0, stock: 0, barcode: '' });
+const editingItem    = ref(null);
 
 let searchTimer = null;
 function debouncedFetch() {
@@ -164,27 +121,8 @@ onMounted(async () => {
 });
 
 function openModal(item = null) {
-  editing.value   = item;
-  formError.value = '';
-  form.value      = item
-    ? { name: item.name, category_id: item.category_id, price: item.price, stock: item.stock, barcode: item.barcode || '' }
-    : { name: '', category_id: '', price: 0, stock: 0, barcode: '' };
-  showModal.value = true;
-}
-
-async function saveItem() {
-  formError.value = '';
-  try {
-    if (editing.value) {
-      await api.put(`/items/${editing.value.id}`, form.value);
-    } else {
-      await api.post('/items', form.value);
-    }
-    showModal.value = false;
-    fetchItems();
-  } catch (e) {
-    formError.value = Object.values(e.response?.data?.errors || {}).flat().join(' ') || 'Save failed.';
-  }
+  editingItem.value = item;
+  showModal.value   = true;
 }
 
 async function deleteItem(item) {

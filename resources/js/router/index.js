@@ -5,7 +5,7 @@ const routes = [
     {
         path: '/login',
         name: 'login',
-        component: () => import('@/pages/LoginPage.vue'),
+        component: () => import('@/pages/login/LoginPage.vue'),
         meta: { guest: true },
     },
     {
@@ -20,42 +20,48 @@ const routes = [
             {
                 path: 'dashboard',
                 name: 'dashboard',
-                component: () => import('@/pages/DashboardPage.vue'),
+                component: () => import('@/pages/dashboard/DashboardPage.vue'),
             },
             {
                 path: 'pos',
                 name: 'pos',
-                component: () => import('@/pages/PosPage.vue'),
+                component: () => import('@/pages/pos/PosPage.vue'),
             },
             {
                 path: 'orders',
                 name: 'orders',
-                component: () => import('@/pages/OrdersPage.vue'),
+                component: () => import('@/pages/orders/OrderListComponent.vue'),
             },
             {
                 path: 'items',
                 name: 'items',
-                component: () => import('@/pages/ItemsPage.vue'),
+                component: () => import('@/pages/items/ItemListComponent.vue'),
             },
             {
                 path: 'categories',
                 name: 'categories',
-                component: () => import('@/pages/CategoriesPage.vue'),
+                component: () => import('@/pages/categories/CategoryListComponent.vue'),
             },
             {
                 path: 'stock',
                 name: 'stock',
-                component: () => import('@/pages/StockPage.vue'),
+                component: () => import('@/pages/stock/StockListComponent.vue'),
             },
             {
                 path: 'reports',
                 name: 'reports',
-                component: () => import('@/pages/ReportsPage.vue'),
+                component: () => import('@/pages/reports/ReportsPage.vue'),
             },
             {
                 path: 'users',
                 name: 'users',
-                component: () => import('@/pages/UsersPage.vue'),
+                component: () => import('@/pages/users/UserListComponent.vue'),
+                meta: { requiresAdmin: true },
+            },
+            {
+                path: 'settings',
+                name: 'settings',
+                component: () => import('@/pages/settings/SettingPage.vue'),
                 meta: { requiresAdmin: true },
             },
         ],

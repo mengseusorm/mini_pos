@@ -1,9 +1,6 @@
-<!-- Moved to pages/login/LoginPage.vue -->
-<template><LoginPage /></template>
-<script setup>
-import LoginPage from './login/LoginPage.vue';
-</script>
-      <!-- Card -->
+<template>
+  <div class="min-h-screen flex items-center justify-center bg-muted/30">
+    <div class="w-full max-w-sm">
       <Card class="shadow-lg">
         <CardHeader class="space-y-1 pb-4">
           <div class="flex justify-center mb-2">

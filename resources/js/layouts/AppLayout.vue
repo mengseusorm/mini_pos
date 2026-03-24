@@ -58,7 +58,7 @@ import { computed } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router';
 import {
   LayoutDashboard, ShoppingCart, FileText, Package,
-  Tag, ClipboardList, BarChart3, Users, LogOut,
+  Tag, ClipboardList, BarChart3, Users, Settings, LogOut,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth';
@@ -74,7 +74,8 @@ const allNavItems = [
   { to: '/categories', icon: Tag,             label: 'Categories' },
   { to: '/stock',      icon: ClipboardList,   label: 'Stock' },
   { to: '/reports',    icon: BarChart3,       label: 'Reports' },
-  { to: '/users',      icon: Users,           label: 'Users', adminOnly: true },
+  { to: '/users',      icon: Users,           label: 'Users',    adminOnly: true },
+  { to: '/settings',   icon: Settings,        label: 'Settings', adminOnly: true },
 ];
 
 const navItems = computed(() =>

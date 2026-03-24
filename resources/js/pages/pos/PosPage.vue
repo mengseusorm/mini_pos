@@ -1,8 +1,6 @@
-<!-- Moved to pages/pos/PosPage.vue -->
-<template><PosPage /></template>
-<script setup>
-import PosPage from './pos/PosPage.vue';
-</script>
+<template>
+  <div class="flex h-full gap-0">
+    <!-- Item grid -->
     <div class="flex-1 p-4 overflow-y-auto">
       <div class="flex gap-2 mb-4">
         <div class="relative flex-1">

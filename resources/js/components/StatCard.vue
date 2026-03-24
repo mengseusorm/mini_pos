@@ -17,7 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 defineProps({
   label:       String,
   value:       [String, Number],
-  icon:        Object,
+  icon:        [Object, Function],
   description: String,
 });
 </script>
