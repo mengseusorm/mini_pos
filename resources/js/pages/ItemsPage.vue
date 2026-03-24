@@ -1,100 +1,137 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Items</h1>
-      <button @click="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-        + Add Item
-      </button>
+  <div class="p-6 space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Items</h1>
+        <p class="text-muted-foreground text-sm">Manage your product catalog</p>
+      </div>
+      <Button @click="openModal()">
+        <Plus class="mr-2 h-4 w-4" /> Add Item
+      </Button>
     </div>
 
     <!-- Filters -->
-    <div class="flex gap-3 mb-4 flex-wrap">
-      <input v-model="search" placeholder="Search..." @input="debouncedFetch"
-        class="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1" />
-      <select v-model="categoryFilter" @change="fetchItems"
-        class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-        <option value="">All Categories</option>
-        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-      </select>
-      <label class="flex items-center gap-2 text-sm cursor-pointer">
-        <input v-model="lowStock" type="checkbox" @change="fetchItems" />
+    <div class="flex gap-3 flex-wrap">
+      <div class="relative flex-1 min-w-48">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input v-model="search" placeholder="Search items…" class="pl-9" @input="debouncedFetch" />
+      </div>
+      <Select v-model="categoryFilter" @update:modelValue="fetchItems">
+        <SelectTrigger class="w-48">
+          <SelectValue placeholder="All Categories" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">All Categories</SelectItem>
+          <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</SelectItem>
+        </SelectContent>
+      </Select>
+      <label class="flex items-center gap-2 text-sm cursor-pointer border rounded-md px-3 h-10">
+        <Checkbox :checked="lowStock" @update:checked="val => { lowStock = val; fetchItems() }" />
         Low stock only
       </label>
     </div>
 
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left text-gray-500 border-b">
-            <th class="px-4 py-3">Name</th>
-            <th class="px-4 py-3">Category</th>
-            <th class="px-4 py-3">Price</th>
-            <th class="px-4 py-3">Stock</th>
-            <th class="px-4 py-3">Barcode</th>
-            <th class="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading"><td colspan="6" class="text-center py-6 text-gray-400">Loading...</td></tr>
-          <tr v-else v-for="item in items" :key="item.id" class="border-b last:border-0">
-            <td class="px-4 py-3 font-medium">{{ item.name }}</td>
-            <td class="px-4 py-3">{{ item.category?.name }}</td>
-            <td class="px-4 py-3">Rp {{ fmt(item.price) }}</td>
-            <td class="px-4 py-3">
-              <span :class="item.stock <= 10 ? 'text-red-600 font-bold' : ''">{{ item.stock }}</span>
-            </td>
-            <td class="px-4 py-3 text-gray-400">{{ item.barcode || '-' }}</td>
-            <td class="px-4 py-3 flex gap-2">
-              <button @click="openModal(item)" class="text-blue-600 hover:underline text-xs">Edit</button>
-              <button @click="deleteItem(item)" class="text-red-500 hover:underline text-xs">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="pl-6">Name</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead>Barcode</TableHead>
+            <TableHead class="pr-6">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="loading">
+            <TableCell colspan="6" class="text-center py-8 text-muted-foreground">Loading…</TableCell>
+          </TableRow>
+          <TableRow v-else v-for="item in items" :key="item.id">
+            <TableCell class="pl-6 font-medium">{{ item.name }}</TableCell>
+            <TableCell>{{ item.category?.name }}</TableCell>
+            <TableCell>Rp {{ fmt(item.price) }}</TableCell>
+            <TableCell>
+              <Badge :variant="item.stock <= 10 ? 'destructive' : 'secondary'">
+                {{ item.stock }}
+              </Badge>
+            </TableCell>
+            <TableCell class="text-muted-foreground">{{ item.barcode || '—' }}</TableCell>
+            <TableCell class="pr-6">
+              <div class="flex gap-2">
+                <Button variant="ghost" size="sm" @click="openModal(item)">
+                  <Pencil class="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" class="text-destructive hover:text-destructive" @click="deleteItem(item)">
+                  <Trash2 class="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Card>
 
-    <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-md">
-        <h2 class="font-bold text-lg mb-4">{{ editing ? 'Edit' : 'Add' }} Item</h2>
-        <form @submit.prevent="saveItem" class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium mb-1">Name</label>
-            <input v-model="form.name" required class="w-full border rounded-lg px-3 py-2 text-sm" />
+    <!-- Add / Edit Dialog -->
+    <Dialog :open="showModal" @update:open="val => showModal = val">
+      <DialogContent class="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{{ editing ? 'Edit' : 'Add' }} Item</DialogTitle>
+        </DialogHeader>
+        <form @submit.prevent="saveItem" class="space-y-4 pt-2">
+          <div class="space-y-2">
+            <Label>Name</Label>
+            <Input v-model="form.name" required placeholder="Item name" />
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Category</label>
-            <select v-model="form.category_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="" disabled>Select category</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-            </select>
+          <div class="space-y-2">
+            <Label>Category</Label>
+            <Select v-model="form.category_id">
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Price</label>
-            <input v-model.number="form.price" type="number" min="0" required class="w-full border rounded-lg px-3 py-2 text-sm" />
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-2">
+              <Label>Price</Label>
+              <Input v-model.number="form.price" type="number" min="0" required />
+            </div>
+            <div class="space-y-2">
+              <Label>Stock</Label>
+              <Input v-model.number="form.stock" type="number" min="0" required />
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Stock</label>
-            <input v-model.number="form.stock" type="number" min="0" required class="w-full border rounded-lg px-3 py-2 text-sm" />
+          <div class="space-y-2">
+            <Label>Barcode <span class="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input v-model="form.barcode" />
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Barcode (optional)</label>
-            <input v-model="form.barcode" class="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <p v-if="formError" class="text-red-500 text-sm">{{ formError }}</p>
-          <div class="flex gap-2 pt-2">
-            <button type="button" @click="showModal = false" class="flex-1 border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50">Cancel</button>
-            <button type="submit" class="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm hover:bg-blue-700">Save</button>
-          </div>
+          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
+          <DialogFooter class="gap-2 pt-2">
+            <Button type="button" variant="outline" @click="showModal = false">Cancel</Button>
+            <Button type="submit">Save</Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { Plus, Search, Pencil, Trash2 } from 'lucide-vue-next';
 import api from '@/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const items          = ref([]);
 const categories     = ref([]);
@@ -115,8 +152,8 @@ function debouncedFetch() {
 
 async function fetchItems() {
   loading.value = true;
-  const params = { search: search.value, category_id: categoryFilter.value, low_stock: lowStock.value ? 1 : '' };
-  const res = await api.get('/items', { params });
+  const params  = { search: search.value, category_id: categoryFilter.value, low_stock: lowStock.value ? 1 : '' };
+  const res     = await api.get('/items', { params });
   items.value   = res.data.data;
   loading.value = false;
 }
@@ -127,12 +164,12 @@ onMounted(async () => {
 });
 
 function openModal(item = null) {
-  editing.value    = item;
-  formError.value  = '';
-  form.value       = item
+  editing.value   = item;
+  formError.value = '';
+  form.value      = item
     ? { name: item.name, category_id: item.category_id, price: item.price, stock: item.stock, barcode: item.barcode || '' }
     : { name: '', category_id: '', price: 0, stock: 0, barcode: '' };
-  showModal.value  = true;
+  showModal.value = true;
 }
 
 async function saveItem() {

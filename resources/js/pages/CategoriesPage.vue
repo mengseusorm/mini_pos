@@ -1,60 +1,83 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Categories</h1>
-      <button @click="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-        + Add Category
-      </button>
-    </div>
-
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left text-gray-500 border-b">
-            <th class="px-4 py-3">#</th>
-            <th class="px-4 py-3">Name</th>
-            <th class="px-4 py-3">Items</th>
-            <th class="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading"><td colspan="4" class="text-center py-6 text-gray-400">Loading...</td></tr>
-          <tr v-else v-for="cat in categories" :key="cat.id" class="border-b last:border-0">
-            <td class="px-4 py-3">{{ cat.id }}</td>
-            <td class="px-4 py-3 font-medium">{{ cat.name }}</td>
-            <td class="px-4 py-3">{{ cat.items_count }}</td>
-            <td class="px-4 py-3 flex gap-2">
-              <button @click="openModal(cat)" class="text-blue-600 hover:underline text-xs">Edit</button>
-              <button @click="deleteCategory(cat)" class="text-red-500 hover:underline text-xs">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-sm">
-        <h2 class="font-bold text-lg mb-4">{{ editing ? 'Edit' : 'Add' }} Category</h2>
-        <form @submit.prevent="saveCategory" class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium mb-1">Name</label>
-            <input v-model="form.name" required class="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <p v-if="formError" class="text-red-500 text-sm">{{ formError }}</p>
-          <div class="flex gap-2 pt-2">
-            <button type="button" @click="showModal = false" class="flex-1 border border-gray-300 rounded-lg py-2 text-sm">Cancel</button>
-            <button type="submit" class="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">Save</button>
-          </div>
-        </form>
+  <div class="p-6 space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Categories</h1>
+        <p class="text-muted-foreground text-sm">Organize your product categories</p>
       </div>
+      <Button @click="openModal()">
+        <Plus class="mr-2 h-4 w-4" /> Add Category
+      </Button>
     </div>
+
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="pl-6 w-16">#</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead class="pr-6">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="loading">
+            <TableCell colspan="4" class="text-center py-8 text-muted-foreground">Loading…</TableCell>
+          </TableRow>
+          <TableRow v-else v-for="cat in categories" :key="cat.id">
+            <TableCell class="pl-6 text-muted-foreground">{{ cat.id }}</TableCell>
+            <TableCell class="font-medium">{{ cat.name }}</TableCell>
+            <TableCell>
+              <Badge variant="secondary">{{ cat.items_count }}</Badge>
+            </TableCell>
+            <TableCell class="pr-6">
+              <div class="flex gap-2">
+                <Button variant="ghost" size="sm" @click="openModal(cat)">
+                  <Pencil class="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" class="text-destructive hover:text-destructive" @click="deleteCategory(cat)">
+                  <Trash2 class="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Card>
+
+    <!-- Add / Edit Dialog -->
+    <Dialog :open="showModal" @update:open="val => showModal = val">
+      <DialogContent class="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{{ editing ? 'Edit' : 'Add' }} Category</DialogTitle>
+        </DialogHeader>
+        <form @submit.prevent="saveCategory" class="space-y-4 pt-2">
+          <div class="space-y-2">
+            <Label>Name</Label>
+            <Input v-model="form.name" required placeholder="Category name" />
+          </div>
+          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
+          <DialogFooter class="gap-2 pt-2">
+            <Button type="button" variant="outline" @click="showModal = false">Cancel</Button>
+            <Button type="submit">Save</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
 import api from '@/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const categories = ref([]);
 const loading    = ref(true);
@@ -64,8 +87,8 @@ const formError  = ref('');
 const form       = ref({ name: '' });
 
 async function fetchCategories() {
-  loading.value = true;
-  const res = await api.get('/categories');
+  loading.value    = true;
+  const res        = await api.get('/categories');
   categories.value = res.data;
   loading.value    = false;
 }

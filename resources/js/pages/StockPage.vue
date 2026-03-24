@@ -1,84 +1,110 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Stock Movements</h1>
-      <button @click="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-        + Add Movement
-      </button>
-    </div>
-
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left text-gray-500 border-b">
-            <th class="px-4 py-3">Item</th>
-            <th class="px-4 py-3">Type</th>
-            <th class="px-4 py-3">Quantity</th>
-            <th class="px-4 py-3">Note</th>
-            <th class="px-4 py-3">By</th>
-            <th class="px-4 py-3">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading"><td colspan="6" class="text-center py-6 text-gray-400">Loading...</td></tr>
-          <tr v-else v-for="m in movements" :key="m.id" class="border-b last:border-0">
-            <td class="px-4 py-3 font-medium">{{ m.item?.name }}</td>
-            <td class="px-4 py-3">
-              <span :class="m.type === 'in' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'"
-                class="px-2 py-0.5 rounded-full text-xs font-medium capitalize">
-                {{ m.type }}
-              </span>
-            </td>
-            <td class="px-4 py-3">{{ m.quantity }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ m.note || '-' }}</td>
-            <td class="px-4 py-3">{{ m.user?.name }}</td>
-            <td class="px-4 py-3">{{ fmtDate(m.created_at) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-sm">
-        <h2 class="font-bold text-lg mb-4">Add Stock Movement</h2>
-        <form @submit.prevent="saveMovement" class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium mb-1">Item</label>
-            <select v-model="form.item_id" required class="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="" disabled>Select item</option>
-              <option v-for="item in allItems" :key="item.id" :value="item.id">{{ item.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Type</label>
-            <select v-model="form.type" class="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="in">Stock In</option>
-              <option value="out">Stock Out</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Quantity</label>
-            <input v-model.number="form.quantity" type="number" min="1" required class="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Note (optional)</label>
-            <input v-model="form.note" class="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <p v-if="formError" class="text-red-500 text-sm">{{ formError }}</p>
-          <div class="flex gap-2 pt-2">
-            <button type="button" @click="showModal = false" class="flex-1 border rounded-lg py-2 text-sm">Cancel</button>
-            <button type="submit" class="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">Save</button>
-          </div>
-        </form>
+  <div class="p-6 space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Stock Movements</h1>
+        <p class="text-muted-foreground text-sm">Track inventory changes</p>
       </div>
+      <Button @click="openModal()">
+        <Plus class="mr-2 h-4 w-4" /> Add Movement
+      </Button>
     </div>
+
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="pl-6">Item</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Quantity</TableHead>
+            <TableHead>Note</TableHead>
+            <TableHead>By</TableHead>
+            <TableHead class="pr-6">Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="loading">
+            <TableCell colspan="6" class="text-center py-8 text-muted-foreground">Loading…</TableCell>
+          </TableRow>
+          <TableRow v-else v-for="m in movements" :key="m.id">
+            <TableCell class="pl-6 font-medium">{{ m.item?.name }}</TableCell>
+            <TableCell>
+              <Badge :variant="m.type === 'in' ? 'success' : 'destructive'" class="capitalize">
+                {{ m.type === 'in' ? 'Stock In' : 'Stock Out' }}
+              </Badge>
+            </TableCell>
+            <TableCell class="font-medium">{{ m.quantity }}</TableCell>
+            <TableCell class="text-muted-foreground">{{ m.note || '—' }}</TableCell>
+            <TableCell>{{ m.user?.name }}</TableCell>
+            <TableCell class="pr-6 text-muted-foreground">{{ fmtDate(m.created_at) }}</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Card>
+
+    <!-- Add Movement Dialog -->
+    <Dialog :open="showModal" @update:open="val => showModal = val">
+      <DialogContent class="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Add Stock Movement</DialogTitle>
+        </DialogHeader>
+        <form @submit.prevent="saveMovement" class="space-y-4 pt-2">
+          <div class="space-y-2">
+            <Label>Item</Label>
+            <Select v-model="form.item_id">
+              <SelectTrigger>
+                <SelectValue placeholder="Select item" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="item in allItems" :key="item.id" :value="item.id">
+                  {{ item.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div class="space-y-2">
+            <Label>Type</Label>
+            <Select v-model="form.type">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="in">Stock In</SelectItem>
+                <SelectItem value="out">Stock Out</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div class="space-y-2">
+            <Label>Quantity</Label>
+            <Input v-model.number="form.quantity" type="number" min="1" required />
+          </div>
+          <div class="space-y-2">
+            <Label>Note <span class="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input v-model="form.note" placeholder="Reason for movement" />
+          </div>
+          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
+          <DialogFooter class="gap-2 pt-2">
+            <Button type="button" variant="outline" @click="showModal = false">Cancel</Button>
+            <Button type="submit">Save</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { Plus } from 'lucide-vue-next';
 import api from '@/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const movements = ref([]);
 const allItems  = ref([]);
@@ -88,8 +114,8 @@ const formError = ref('');
 const form      = ref({ item_id: '', type: 'in', quantity: 1, note: '' });
 
 async function fetchMovements() {
-  loading.value = true;
-  const res = await api.get('/stock-movements');
+  loading.value   = true;
+  const res       = await api.get('/stock-movements');
   movements.value = res.data.data;
   loading.value   = false;
 }

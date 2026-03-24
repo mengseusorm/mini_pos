@@ -1,99 +1,140 @@
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-6 text-gray-800">Orders</h1>
+  <div class="p-6 space-y-6">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Orders</h1>
+      <p class="text-muted-foreground text-sm">View and manage all orders</p>
+    </div>
 
     <!-- Filters -->
-    <div class="flex gap-3 mb-4 flex-wrap">
-      <input v-model="filters.date_from" type="date"
-        class="border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-      <input v-model="filters.date_to" type="date"
-        class="border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-      <select v-model="filters.payment_method"
-        class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-        <option value="">All Methods</option>
-        <option value="cash">Cash</option>
-        <option value="card">Card</option>
-      </select>
-      <button @click="fetchOrders"
-        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Filter</button>
+    <div class="flex gap-3 flex-wrap items-end">
+      <div class="space-y-1">
+        <Label class="text-xs">From</Label>
+        <Input v-model="filters.date_from" type="date" class="h-9" />
+      </div>
+      <div class="space-y-1">
+        <Label class="text-xs">To</Label>
+        <Input v-model="filters.date_to" type="date" class="h-9" />
+      </div>
+      <Select v-model="filters.payment_method">
+        <SelectTrigger class="w-40 h-9">
+          <SelectValue placeholder="All Methods" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">All Methods</SelectItem>
+          <SelectItem value="cash">Cash</SelectItem>
+          <SelectItem value="card">Card</SelectItem>
+        </SelectContent>
+      </Select>
+      <Button size="sm" @click="fetchOrders">
+        <Search class="mr-2 h-4 w-4" /> Filter
+      </Button>
     </div>
 
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left text-gray-500 border-b">
-            <th class="px-4 py-3">#</th>
-            <th class="px-4 py-3">Cashier</th>
-            <th class="px-4 py-3">Items</th>
-            <th class="px-4 py-3">Total</th>
-            <th class="px-4 py-3">Method</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading"><td colspan="7" class="text-center py-6 text-gray-400">Loading...</td></tr>
-          <tr v-else-if="orders.length === 0"><td colspan="7" class="text-center py-6 text-gray-400">No orders found.</td></tr>
-          <tr v-else v-for="order in orders" :key="order.id"
-            class="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
-            @click="selected = order">
-            <td class="px-4 py-3">{{ order.id }}</td>
-            <td class="px-4 py-3">{{ order.user?.name }}</td>
-            <td class="px-4 py-3">{{ order.items?.length }}</td>
-            <td class="px-4 py-3">Rp {{ fmt(order.total) }}</td>
-            <td class="px-4 py-3 capitalize">{{ order.payment_method }}</td>
-            <td class="px-4 py-3">
-              <span :class="statusClass(order.status)" class="px-2 py-0.5 rounded-full text-xs">
-                {{ order.status }}
-              </span>
-            </td>
-            <td class="px-4 py-3">{{ fmtDate(order.created_at) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="pl-6">#</TableHead>
+            <TableHead>Cashier</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Method</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead class="pr-6">Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="loading">
+            <TableCell colspan="7" class="text-center py-8 text-muted-foreground">Loading…</TableCell>
+          </TableRow>
+          <TableRow v-else-if="orders.length === 0">
+            <TableCell colspan="7" class="text-center py-8 text-muted-foreground">No orders found.</TableCell>
+          </TableRow>
+          <TableRow
+            v-else
+            v-for="order in orders"
+            :key="order.id"
+            class="cursor-pointer"
+            @click="selected = order"
+          >
+            <TableCell class="pl-6 font-medium">{{ order.id }}</TableCell>
+            <TableCell>{{ order.user?.name }}</TableCell>
+            <TableCell>{{ order.items?.length }}</TableCell>
+            <TableCell>Rp {{ fmt(order.total) }}</TableCell>
+            <TableCell class="capitalize">{{ order.payment_method }}</TableCell>
+            <TableCell>
+              <Badge :variant="statusVariant(order.status)" class="capitalize">{{ order.status }}</Badge>
+            </TableCell>
+            <TableCell class="pr-6 text-muted-foreground">{{ fmtDate(order.created_at) }}</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Card>
 
     <!-- Pagination -->
-    <div v-if="pagination" class="flex justify-between items-center mt-4 text-sm">
-      <span class="text-gray-500">Total: {{ pagination.total }}</span>
-      <div class="flex gap-2">
-        <button :disabled="pagination.current_page <= 1" @click="page--; fetchOrders()"
-          class="px-3 py-1 border rounded disabled:opacity-40">Prev</button>
-        <span>{{ pagination.current_page }} / {{ pagination.last_page }}</span>
-        <button :disabled="pagination.current_page >= pagination.last_page" @click="page++; fetchOrders()"
-          class="px-3 py-1 border rounded disabled:opacity-40">Next</button>
+    <div v-if="pagination" class="flex justify-between items-center text-sm">
+      <span class="text-muted-foreground">Total: {{ pagination.total }}</span>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" size="sm" :disabled="pagination.current_page <= 1" @click="page--; fetchOrders()">
+          Previous
+        </Button>
+        <span class="text-muted-foreground">{{ pagination.current_page }} / {{ pagination.last_page }}</span>
+        <Button variant="outline" size="sm" :disabled="pagination.current_page >= pagination.last_page" @click="page++; fetchOrders()">
+          Next
+        </Button>
       </div>
     </div>
 
-    <!-- Order detail modal -->
-    <div v-if="selected" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 class="font-bold text-lg mb-4">Order #{{ selected.id }}</h2>
-        <table class="w-full text-sm mb-4">
-          <thead><tr class="border-b"><th class="text-left pb-1">Item</th><th class="text-right pb-1">Qty</th><th class="text-right pb-1">Price</th></tr></thead>
-          <tbody>
-            <tr v-for="i in selected.items" :key="i.id" class="border-b">
-              <td class="py-1">{{ i.item?.name }}</td>
-              <td class="py-1 text-right">{{ i.quantity }}</td>
-              <td class="py-1 text-right">Rp {{ fmt(i.subtotal) }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="space-y-1 text-sm">
-          <div class="flex justify-between"><span>Subtotal</span><span>Rp {{ fmt(selected.subtotal) }}</span></div>
-          <div v-if="selected.discount > 0" class="flex justify-between text-red-500"><span>Discount</span><span>- Rp {{ fmt(selected.discount) }}</span></div>
-          <div v-if="selected.tax > 0" class="flex justify-between"><span>Tax</span><span>Rp {{ fmt(selected.tax) }}</span></div>
-          <div class="flex justify-between font-bold"><span>Total</span><span>Rp {{ fmt(selected.total) }}</span></div>
+    <!-- Order Detail Dialog -->
+    <Dialog :open="!!selected" @update:open="val => { if (!val) selected = null }">
+      <DialogContent class="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Order #{{ selected?.id }}</DialogTitle>
+        </DialogHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Item</TableHead>
+              <TableHead class="text-right">Qty</TableHead>
+              <TableHead class="text-right">Price</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow v-for="i in selected?.items" :key="i.id">
+              <TableCell>{{ i.item?.name }}</TableCell>
+              <TableCell class="text-right">{{ i.quantity }}</TableCell>
+              <TableCell class="text-right">Rp {{ fmt(i.subtotal) }}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+        <Separator />
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between"><span class="text-muted-foreground">Subtotal</span><span>Rp {{ fmt(selected?.subtotal) }}</span></div>
+          <div v-if="selected?.discount > 0" class="flex justify-between text-destructive"><span>Discount</span><span>− Rp {{ fmt(selected?.discount) }}</span></div>
+          <div v-if="selected?.tax > 0" class="flex justify-between"><span class="text-muted-foreground">Tax</span><span>Rp {{ fmt(selected?.tax) }}</span></div>
+          <div class="flex justify-between font-bold"><span>Total</span><span>Rp {{ fmt(selected?.total) }}</span></div>
         </div>
-        <button @click="selected = null" class="mt-4 w-full bg-gray-100 hover:bg-gray-200 rounded-lg py-2 text-sm">Close</button>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button variant="outline" @click="selected = null" class="w-full">Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { Search } from 'lucide-vue-next';
 import api from '@/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const orders     = ref([]);
 const loading    = ref(true);
@@ -103,9 +144,9 @@ const page       = ref(1);
 const filters    = ref({ date_from: '', date_to: '', payment_method: '' });
 
 async function fetchOrders() {
-  loading.value = true;
-  const params  = { page: page.value, ...filters.value };
-  const res = await api.get('/orders', { params });
+  loading.value    = true;
+  const params     = { page: page.value, ...filters.value };
+  const res        = await api.get('/orders', { params });
   orders.value     = res.data.data;
   pagination.value = res.data;
   loading.value    = false;
@@ -113,11 +154,7 @@ async function fetchOrders() {
 
 onMounted(fetchOrders);
 
-const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
-const fmtDate = (d) => new Date(d).toLocaleDateString('id-ID');
-const statusClass = (s) => ({
-  completed: 'bg-green-100 text-green-700',
-  pending:   'bg-yellow-100 text-yellow-700',
-  cancelled: 'bg-red-100 text-red-700',
-}[s] || '');
+const fmt          = (n) => Number(n || 0).toLocaleString('id-ID');
+const fmtDate      = (d) => new Date(d).toLocaleDateString('id-ID');
+const statusVariant = (s) => ({ completed: 'success', pending: 'warning', cancelled: 'destructive' }[s] || 'secondary');
 </script>

@@ -1,81 +1,111 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Users</h1>
-      <button @click="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-        + Add User
-      </button>
-    </div>
-
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left text-gray-500 border-b">
-            <th class="px-4 py-3">#</th>
-            <th class="px-4 py-3">Name</th>
-            <th class="px-4 py-3">Email</th>
-            <th class="px-4 py-3">Role</th>
-            <th class="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading"><td colspan="5" class="text-center py-6 text-gray-400">Loading...</td></tr>
-          <tr v-else v-for="u in users" :key="u.id" class="border-b last:border-0">
-            <td class="px-4 py-3">{{ u.id }}</td>
-            <td class="px-4 py-3 font-medium">{{ u.name }}</td>
-            <td class="px-4 py-3">{{ u.email }}</td>
-            <td class="px-4 py-3">
-              <span :class="u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
-                class="px-2 py-0.5 rounded-full text-xs capitalize">{{ u.role }}</span>
-            </td>
-            <td class="px-4 py-3 flex gap-2">
-              <button @click="openModal(u)" class="text-blue-600 hover:underline text-xs">Edit</button>
-              <button @click="deleteUser(u)" class="text-red-500 hover:underline text-xs">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-sm">
-        <h2 class="font-bold text-lg mb-4">{{ editing ? 'Edit' : 'Add' }} User</h2>
-        <form @submit.prevent="saveUser" class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium mb-1">Name</label>
-            <input v-model="form.name" required class="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Email</label>
-            <input v-model="form.email" type="email" required class="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Password {{ editing ? '(leave blank to keep)' : '' }}</label>
-            <input v-model="form.password" type="password" :required="!editing"
-              class="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Role</label>
-            <select v-model="form.role" class="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="cashier">Cashier</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <p v-if="formError" class="text-red-500 text-sm">{{ formError }}</p>
-          <div class="flex gap-2 pt-2">
-            <button type="button" @click="showModal = false" class="flex-1 border rounded-lg py-2 text-sm">Cancel</button>
-            <button type="submit" class="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm">Save</button>
-          </div>
-        </form>
+  <div class="p-6 space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Users</h1>
+        <p class="text-muted-foreground text-sm">Manage system users and roles</p>
       </div>
+      <Button @click="openModal()">
+        <Plus class="mr-2 h-4 w-4" /> Add User
+      </Button>
     </div>
+
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="pl-6 w-16">#</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead class="pr-6">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="loading">
+            <TableCell colspan="5" class="text-center py-8 text-muted-foreground">Loading…</TableCell>
+          </TableRow>
+          <TableRow v-else v-for="u in users" :key="u.id">
+            <TableCell class="pl-6 text-muted-foreground">{{ u.id }}</TableCell>
+            <TableCell class="font-medium">{{ u.name }}</TableCell>
+            <TableCell class="text-muted-foreground">{{ u.email }}</TableCell>
+            <TableCell>
+              <Badge :variant="u.role === 'admin' ? 'default' : 'secondary'" class="capitalize">
+                {{ u.role }}
+              </Badge>
+            </TableCell>
+            <TableCell class="pr-6">
+              <div class="flex gap-2">
+                <Button variant="ghost" size="sm" @click="openModal(u)">
+                  <Pencil class="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" class="text-destructive hover:text-destructive" @click="deleteUser(u)">
+                  <Trash2 class="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Card>
+
+    <!-- Add / Edit User Dialog -->
+    <Dialog :open="showModal" @update:open="val => showModal = val">
+      <DialogContent class="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{{ editing ? 'Edit' : 'Add' }} User</DialogTitle>
+        </DialogHeader>
+        <form @submit.prevent="saveUser" class="space-y-4 pt-2">
+          <div class="space-y-2">
+            <Label>Name</Label>
+            <Input v-model="form.name" required placeholder="Full name" />
+          </div>
+          <div class="space-y-2">
+            <Label>Email</Label>
+            <Input v-model="form.email" type="email" required placeholder="email@example.com" />
+          </div>
+          <div class="space-y-2">
+            <Label>
+              Password
+              <span v-if="editing" class="text-muted-foreground font-normal text-xs"> (leave blank to keep)</span>
+            </Label>
+            <Input v-model="form.password" type="password" :required="!editing" placeholder="••••••••" />
+          </div>
+          <div class="space-y-2">
+            <Label>Role</Label>
+            <Select v-model="form.role">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cashier">Cashier</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
+          <DialogFooter class="gap-2 pt-2">
+            <Button type="button" variant="outline" @click="showModal = false">Cancel</Button>
+            <Button type="submit">Save</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
 import api from '@/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const users     = ref([]);
 const loading   = ref(true);
@@ -86,7 +116,7 @@ const form      = ref({ name: '', email: '', password: '', role: 'cashier' });
 
 async function fetchUsers() {
   loading.value = true;
-  const res = await api.get('/users');
+  const res     = await api.get('/users');
   users.value   = res.data;
   loading.value = false;
 }
@@ -104,7 +134,7 @@ function openModal(user = null) {
 
 async function saveUser() {
   formError.value = '';
-  const payload = { ...form.value };
+  const payload   = { ...form.value };
   if (editing.value && !payload.password) delete payload.password;
   try {
     if (editing.value) {
