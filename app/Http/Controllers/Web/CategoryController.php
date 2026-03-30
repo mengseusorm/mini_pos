@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
@@ -14,26 +14,16 @@ class CategoryController extends Controller
         return view('categories.index', compact('categories'));
     }
 
-    public function store(Request $request)
+    public function store(CategoryRequest $request)
     {
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-        ]);
-
-        Category::create($request->only('name', 'description'));
+        Category::create($request->validated());
 
         return back()->with('success', 'Category created successfully.');
     }
 
-    public function update(Request $request, Category $category)
+    public function update(CategoryRequest $request, Category $category)
     {
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-        ]);
-
-        $category->update($request->only('name', 'description'));
+        $category->update($request->validated());
 
         return back()->with('success', 'Category updated successfully.');
     }

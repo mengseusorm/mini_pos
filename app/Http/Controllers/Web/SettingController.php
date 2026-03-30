@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SettingRequest;
 use App\Models\Setting;
-use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
@@ -17,16 +17,8 @@ class SettingController extends Controller
         return view('settings.index', compact('settings', 'logoUrl'));
     }
 
-    public function update(Request $request)
+    public function update(SettingRequest $request)
     {
-        $request->validate([
-            'site_name'        => 'sometimes|string|max:100',
-            'site_description' => 'sometimes|string|max:255',
-            'theme_color'      => 'sometimes|in:blue,green,purple,red',
-            'tax_rate'         => 'sometimes|numeric|min:0|max:100',
-            'currency'         => 'sometimes|string|max:10',
-            'logo'             => 'sometimes|file|image|max:2048',
-        ]);
 
         foreach ($request->only('site_name', 'site_description', 'theme_color', 'tax_rate', 'currency') as $key => $value) {
             if ($value !== null && $value !== '') {

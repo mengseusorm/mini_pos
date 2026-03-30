@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StockMovementRequest;
 use App\Models\Item;
 use App\Models\StockMovement;
-use Illuminate\Http\Request;
 
 class StockController extends Controller
 {
@@ -17,14 +17,9 @@ class StockController extends Controller
         return view('stock.index', compact('movements', 'items'));
     }
 
-    public function store(Request $request)
+    public function store(StockMovementRequest $request)
     {
-        $data = $request->validate([
-            'item_id'  => 'required|exists:items,id',
-            'type'     => 'required|in:in,out',
-            'quantity' => 'required|integer|min:1',
-            'note'     => 'nullable|string|max:500',
-        ]);
+        $data = $request->validated();
 
         $item = Item::findOrFail($data['item_id']);
 

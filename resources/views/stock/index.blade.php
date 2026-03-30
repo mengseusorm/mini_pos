@@ -65,9 +65,7 @@
     </div>
 
     {{-- Add Movement Modal --}}
-    <div x-show="showModal" x-transition.opacity
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @keydown.escape.window="showModal = false">
+    @include('stock._stock-modal')
 
         <div @click.stop class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
             <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">

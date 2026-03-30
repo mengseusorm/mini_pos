@@ -71,14 +71,8 @@
     </div>
 
     {{-- Create / Edit Modal --}}
-    <div x-show="showModal" x-transition.opacity
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @keydown.escape.window="showModal = false; editing = null">
+    @include('categories._category-modal')
 
-        <div @click.stop class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white"
-                    x-text="editing ? 'Edit Category' : 'New Category'"></h3>
                 <button @click="showModal = false; editing = null"
                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

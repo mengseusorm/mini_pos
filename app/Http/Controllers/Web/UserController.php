@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -15,15 +15,8 @@ class UserController extends Controller
         return view('users.index', compact('users'));
     }
 
-    public function store(Request $request)
+    public function store(UserRequest $request)
     {
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'role'     => 'required|in:admin,cashier',
-        ]);
-
         User::create([
             'name'     => $request->name,
             'email'    => $request->email,
@@ -34,15 +27,8 @@ class UserController extends Controller
         return back()->with('success', 'User created successfully.');
     }
 
-    public function update(Request $request, User $user)
+    public function update(UserRequest $request, User $user)
     {
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed',
-            'role'     => 'required|in:admin,cashier',
-        ]);
-
         $data = $request->only('name', 'email', 'role');
 
         if ($request->filled('password')) {

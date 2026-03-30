@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ItemRequest;
 use App\Models\Category;
 use App\Models\Item;
 use Illuminate\Http\Request;
@@ -25,37 +26,19 @@ class ItemController extends Controller
         $items      = $query->latest()->paginate(15)->withQueryString();
         $categories = Category::orderBy('name')->get();
 
-
-        Log::info('',['items'=>$items,'categories'=>$categories]);
         return view('items.index', compact('items', 'categories'));
     }
 
-    public function store(Request $request)
+    public function store(ItemRequest $request)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name'        => 'required|string|max:255',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-            'barcode'     => 'nullable|string|unique:items,barcode',
-        ]);
-
-        Item::create($request->only('category_id', 'name', 'price', 'stock', 'barcode'));
+        Item::create($request->validated());
 
         return back()->with('success', 'Item created successfully.');
     }
 
-    public function update(Request $request, Item $item)
+    public function update(ItemRequest $request, Item $item)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name'        => 'required|string|max:255',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-            'barcode'     => 'nullable|string|unique:items,barcode,' . $item->id,
-        ]);
-
-        $item->update($request->only('category_id', 'name', 'price', 'stock', 'barcode'));
+        $item->update($request->validated());
 
         return back()->with('success', 'Item updated successfully.');
     }

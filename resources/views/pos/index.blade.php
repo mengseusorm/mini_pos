@@ -36,7 +36,7 @@
                     <p class="font-medium text-sm text-gray-800 dark:text-white truncate" x-text="item.name"></p>
                     <p class="text-xs text-gray-400 mt-0.5" x-text="item.category ? item.category.name : ''"></p>
                     <div class="flex justify-between items-center mt-2">
-                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400" x-text="'Rp ' + Number(item.price).toLocaleString('id-ID')"></span>
+                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400" x-text="'{{ $currency }} ' + Number(item.price).toLocaleString('id-ID')"></span>
                         <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400" x-text="'Stk: ' + item.stock"></span>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                     <div class="px-4 py-2 flex items-center gap-2">
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-800 dark:text-white truncate" x-text="line.name"></p>
-                            <p class="text-xs text-gray-400" x-text="'Rp ' + Number(line.price).toLocaleString('id-ID')"></p>
+                            <p class="text-xs text-gray-400" x-text="'{{ $currency }} ' + Number(line.price).toLocaleString('id-ID')"></p>
                         </div>
                         <div class="flex items-center gap-1">
                             <button @click="decreaseQty(idx)" class="w-6 h-6 rounded bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-sm font-bold flex items-center justify-center hover:bg-gray-200">-</button>
@@ -69,7 +69,7 @@
                             <button @click="increaseQty(idx)" class="w-6 h-6 rounded bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-sm font-bold flex items-center justify-center hover:bg-gray-200">+</button>
                         </div>
                         <p class="text-sm font-semibold text-gray-800 dark:text-white w-20 text-right"
-                            x-text="'Rp ' + Number(line.price * line.quantity).toLocaleString('id-ID')"></p>
+                            x-text="'{{ $currency }} ' + Number(line.price * line.quantity).toLocaleString('id-ID')"></p>
                         <button @click="removeFromCart(idx)" class="text-gray-300 hover:text-red-500 ml-1">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -86,7 +86,7 @@
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
                 <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Subtotal</span>
-                    <span x-text="'Rp ' + Number(subtotal).toLocaleString('id-ID')"></span>
+                    <span x-text="'{{ $currency }} ' + Number(subtotal).toLocaleString('id-ID')"></span>
                 </div>
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-gray-600 dark:text-gray-300">Discount</span>
@@ -100,7 +100,7 @@
                 </div>
                 <div class="flex justify-between font-bold text-base text-gray-800 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-2">
                     <span>Total</span>
-                    <span x-text="'Rp ' + Number(total).toLocaleString('id-ID')"></span>
+                    <span x-text="'{{ $currency }} ' + Number(total).toLocaleString('id-ID')"></span>
                 </div>
             </div>
 
@@ -121,7 +121,7 @@
                     <input type="number" x-model.number="amountPaid" min="0"
                         class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <p class="text-xs text-green-600 mt-1" x-show="amountPaid >= total && total > 0"
-                        x-text="'Change: Rp ' + Number(amountPaid - total).toLocaleString('id-ID')"></p>
+                        x-text="'Change: {{ $currency }} ' + Number(amountPaid - total).toLocaleString('id-ID')"></p>
                 </div>
 
                 {{-- Error --}}
@@ -149,9 +149,9 @@
             </svg>
         </div>
         <h3 class="text-lg font-bold text-gray-800 dark:text-white">Order Complete!</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="receipt ? 'Order #' + receipt.id + ' — Rp ' + Number(receipt.total).toLocaleString('id-ID') : ''"></p>
+        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="receipt ? 'Order #' + receipt.id + ' — {{ $currency }} ' + Number(receipt.total).toLocaleString('id-ID') : ''"></p>
         <div x-show="receipt && receipt.change > 0" class="text-sm text-green-600 font-semibold"
-            x-text="'Change: Rp ' + (receipt ? Number(receipt.change).toLocaleString('id-ID') : '')"></div>
+            x-text="'Change: {{ $currency }} ' + (receipt ? Number(receipt.change).toLocaleString('id-ID') : '')"></div>
         <button @click="receipt = null; clearCart()"
             class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
             New Order

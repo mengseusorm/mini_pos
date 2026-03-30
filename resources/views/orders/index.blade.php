@@ -55,10 +55,10 @@
                         <td class="px-6 py-3 font-medium">#{{ $o->id }}</td>
                         <td class="px-6 py-3">{{ $o->user?->name ?? 'Guest' }}</td>
                         <td class="px-6 py-3">{{ $o->items->count() }}</td>
-                        <td class="px-6 py-3">Rp {{ number_format($o->subtotal) }}</td>
-                        <td class="px-6 py-3 text-red-500">-Rp {{ number_format($o->discount) }}</td>
-                        <td class="px-6 py-3 text-yellow-600">+Rp {{ number_format($o->tax) }}</td>
-                        <td class="px-6 py-3 font-semibold">Rp {{ number_format($o->total) }}</td>
+                        <td class="px-6 py-3">{{ $currency }} {{ number_format($o->subtotal) }}</td>
+                        <td class="px-6 py-3 text-red-500">-{{ $currency }} {{ number_format($o->discount) }}</td>
+                        <td class="px-6 py-3 text-yellow-600">+{{ $currency }} {{ number_format($o->tax) }}</td>
+                        <td class="px-6 py-3 font-semibold">{{ $currency }} {{ number_format($o->total) }}</td>
                         <td class="px-6 py-3 capitalize">{{ $o->payment_method }}</td>
                         <td class="px-6 py-3">
                             @if($o->status === 'completed')
@@ -138,9 +138,9 @@
                             <template x-for="line in orderItems" :key="line.id">
                                 <tr>
                                     <td class="px-4 py-2 dark:text-gray-300" x-text="line.name"></td>
-                                    <td class="px-4 py-2 text-right dark:text-gray-300" x-text="'Rp ' + Number(line.price).toLocaleString('id-ID')"></td>
+                                    <td class="px-4 py-2 text-right dark:text-gray-300" x-text="'{{ $currency }} ' + Number(line.price).toLocaleString('id-ID')"></td>
                                     <td class="px-4 py-2 text-right dark:text-gray-300" x-text="line.quantity"></td>
-                                    <td class="px-4 py-2 text-right font-medium dark:text-white" x-text="'Rp ' + Number(line.subtotal).toLocaleString('id-ID')"></td>
+                                    <td class="px-4 py-2 text-right font-medium dark:text-white" x-text="'{{ $currency }} ' + Number(line.subtotal).toLocaleString('id-ID')"></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -150,19 +150,19 @@
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1 text-sm">
                         <div class="flex justify-between dark:text-gray-300">
                             <span>Subtotal</span>
-                            <span x-text="'Rp ' + Number(order.subtotal).toLocaleString('id-ID')"></span>
+                            <span x-text="'{{ $currency }} ' + Number(order.subtotal).toLocaleString('id-ID')"></span>
                         </div>
                         <div class="flex justify-between text-red-500">
                             <span>Discount</span>
-                            <span x-text="'-Rp ' + Number(order.discount).toLocaleString('id-ID')"></span>
+                            <span x-text="'-{{ $currency }} ' + Number(order.discount).toLocaleString('id-ID')"></span>
                         </div>
                         <div class="flex justify-between text-yellow-600">
                             <span>Tax</span>
-                            <span x-text="'+Rp ' + Number(order.tax).toLocaleString('id-ID')"></span>
+                            <span x-text="'+{{ $currency }} ' + Number(order.tax).toLocaleString('id-ID')"></span>
                         </div>
                         <div class="flex justify-between font-bold text-base dark:text-white border-t border-gray-200 dark:border-gray-700 pt-1">
                             <span>Total</span>
-                            <span x-text="'Rp ' + Number(order.total).toLocaleString('id-ID')"></span>
+                            <span x-text="'{{ $currency }} ' + Number(order.total).toLocaleString('id-ID')"></span>
                         </div>
                     </div>
                 </div>

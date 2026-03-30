@@ -45,7 +45,7 @@
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <p class="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
-            <p class="text-3xl font-bold text-gray-800 dark:text-white">Rp {{ number_format($summary['revenue']) }}</p>
+            <p class="text-3xl font-bold text-gray-800 dark:text-white">{{ $currency }} {{ number_format($summary['revenue']) }}</p>
         </div>
     </div>
     @endif
@@ -85,15 +85,15 @@
                         @if($type === 'daily')
                             <td class="px-6 py-3 font-medium">{{ $row->date }}</td>
                             <td class="px-6 py-3">{{ $row->total_orders }}</td>
-                            <td class="px-6 py-3 font-semibold">Rp {{ number_format($row->revenue) }}</td>
+                            <td class="px-6 py-3 font-semibold">{{ $currency }} {{ number_format($row->revenue) }}</td>
                         @elseif($type === 'monthly')
                             <td class="px-6 py-3 font-medium">{{ $row->month }}</td>
                             <td class="px-6 py-3">{{ $row->total_orders }}</td>
-                            <td class="px-6 py-3 font-semibold">Rp {{ number_format($row->revenue) }}</td>
+                            <td class="px-6 py-3 font-semibold">{{ $currency }} {{ number_format($row->revenue) }}</td>
                         @else
                             <td class="px-6 py-3 font-medium">{{ $row->name }}</td>
                             <td class="px-6 py-3">{{ $row->total_qty }}</td>
-                            <td class="px-6 py-3 font-semibold">Rp {{ number_format($row->total_revenue) }}</td>
+                            <td class="px-6 py-3 font-semibold">{{ $currency }} {{ number_format($row->total_revenue) }}</td>
                         @endif
                     </tr>
                     @empty

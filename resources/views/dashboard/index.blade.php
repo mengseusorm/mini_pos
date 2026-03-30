@@ -16,7 +16,7 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Today's Sales</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-white">Rp {{ number_format($stats['today_sales']) }}</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ $currency }} {{ number_format($stats['today_sales']) }}</p>
             </div>
         </div>
 
@@ -40,7 +40,7 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Monthly Sales</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-white">Rp {{ number_format($stats['month_sales']) }}</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ $currency }} {{ number_format($stats['month_sales']) }}</p>
             </div>
         </div>
 
@@ -105,7 +105,7 @@
                         <td class="px-6 py-3 font-medium">#{{ $order->id }}</td>
                         <td class="px-6 py-3">{{ $order->user?->name ?? 'Guest' }}</td>
                         <td class="px-6 py-3">{{ $order->items->count() }} item(s)</td>
-                        <td class="px-6 py-3 font-semibold">Rp {{ number_format($order->total) }}</td>
+                        <td class="px-6 py-3 font-semibold">{{ $currency }} {{ number_format($order->total) }}</td>
                         <td class="px-6 py-3">
                             @if($order->status === 'completed')
                                 <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-200">Completed</span>
