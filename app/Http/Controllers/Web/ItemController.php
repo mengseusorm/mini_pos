@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Item;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ItemController extends Controller
 {
@@ -24,6 +25,8 @@ class ItemController extends Controller
         $items      = $query->latest()->paginate(15)->withQueryString();
         $categories = Category::orderBy('name')->get();
 
+
+        Log::info('',['items'=>$items,'categories'=>$categories]);
         return view('items.index', compact('items', 'categories'));
     }
 

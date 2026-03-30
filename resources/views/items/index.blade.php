@@ -30,7 +30,7 @@
             </a>
             @endif
         </form>
-        <button @click="editing = null; showModal = true"
+        <button type="button" @click="editing = null; showModal = true"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg whitespace-nowrap">
             + Add Item
         </button>
@@ -69,7 +69,7 @@
                             @endif
                         </td>
                         <td class="px-6 py-3 flex gap-2">
-                            <button @click="editing = {{ Js::from($item) }}; showModal = true"
+                            <button type="button" @click="editing = {{ Js::from($item->only(['id','name','category_id','barcode','price','stock','description'])) }}; showModal = true"
                                 class="px-3 py-1 text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded dark:bg-yellow-900 dark:text-yellow-200">
                                 Edit
                             </button>

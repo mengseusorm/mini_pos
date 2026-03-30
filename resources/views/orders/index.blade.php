@@ -4,7 +4,7 @@
 @section('breadcrumb', 'Orders')
 
 @section('content')
-<div x-data="{ showDetail: false, order: null }" class="space-y-4">
+<div x-data="{ showDetail: false, order: null, orderItems: [] }" class="space-y-4">
 
     {{-- Date Filter --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
@@ -71,7 +71,7 @@
                         </td>
                         <td class="px-6 py-3 text-gray-400 whitespace-nowrap">{{ $o->created_at->format('d M Y H:i') }}</td>
                         <td class="px-6 py-3">
-                            <button @click="order = {{ Js::from($o->load('items.item')) }}; showDetail = true"
+                            <button type="button" @click="order = {{ Js::from($o->only(['id','user_id','subtotal','discount','tax','total','payment_method','status','created_at'])) }}; order.user = {{ Js::from($o->user ? ['name' => $o->user->name] : null) }}; orderItems = {{ Js::from($o->items->map(fn($line) => ['id' => $line->id, 'name' => $line->item?->name ?? 'Unknown', 'price' => $line->price, 'quantity' => $line->quantity, 'subtotal' => $line->subtotal])) }}; showDetail = true"
                                 class="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 rounded dark:bg-blue-900 dark:text-blue-200">
                                 View
                             </button>
@@ -95,14 +95,14 @@
     {{-- Order Detail Modal --}}
     <div x-show="showDetail" x-transition.opacity
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @keydown.escape.window="showDetail = false; order = null">
+        @keydown.escape.window="showDetail = false; order = null; orderItems = []">
 
         <div @click.stop class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
                     Order Detail <span x-text="order ? '#' + order.id : ''"></span>
                 </h3>
-                <button @click="showDetail = false; order = null"
+                <button @click="showDetail = false; order = null; orderItems = []"
                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -135,9 +135,9 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            <template x-for="line in order.items" :key="line.id">
+                            <template x-for="line in orderItems" :key="line.id">
                                 <tr>
-                                    <td class="px-4 py-2 dark:text-gray-300" x-text="line.item ? line.item.name : '-'"></td>
+                                    <td class="px-4 py-2 dark:text-gray-300" x-text="line.name"></td>
                                     <td class="px-4 py-2 text-right dark:text-gray-300" x-text="'Rp ' + Number(line.price).toLocaleString('id-ID')"></td>
                                     <td class="px-4 py-2 text-right dark:text-gray-300" x-text="line.quantity"></td>
                                     <td class="px-4 py-2 text-right font-medium dark:text-white" x-text="'Rp ' + Number(line.subtotal).toLocaleString('id-ID')"></td>
@@ -169,7 +169,7 @@
             </template>
 
             <div class="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700">
-                <button @click="showDetail = false; order = null"
+                <button type="button" @click="showDetail = false; order = null; orderItems = []"
                     class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg">
                     Close
                 </button>
