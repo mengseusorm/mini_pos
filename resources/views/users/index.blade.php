@@ -4,155 +4,151 @@
 @section('breadcrumb', 'Users')
 
 @section('content')
-<div x-data="usersPage()" x-init="load()">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
-        <button @click="openCreateModal()" type="button"
-                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+<div x-data="{ showModal: false, editing: null }" class="space-y-4">
+
+    {{-- Header --}}
+    <div class="flex justify-between items-center">
+        <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Users</h1>
+        <button @click="editing = null; showModal = true"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
             + Add User
         </button>
     </div>
 
-    <!-- Table -->
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th class="px-6 py-3">Name</th>
-                    <th class="px-6 py-3">Email</th>
-                    <th class="px-6 py-3">Role</th>
-                    <th class="px-6 py-3">Created</th>
-                    <th class="px-6 py-3">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template x-if="loading">
-                    <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>
-                </template>
-                <template x-if="!loading && users.length === 0">
-                    <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">No users found</td></tr>
-                </template>
-                <template x-for="user in users" :key="user.id">
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold" x-text="user.name.charAt(0).toUpperCase()"></div>
-                            <span x-text="user.name"></span>
+    {{-- Table --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500 dark:text-gray-400">
+                    <tr>
+                        <th class="px-6 py-3">#</th>
+                        <th class="px-6 py-3">Name</th>
+                        <th class="px-6 py-3">Email</th>
+                        <th class="px-6 py-3">Role</th>
+                        <th class="px-6 py-3">Joined</th>
+                        <th class="px-6 py-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($users as $user)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-3">{{ $loop->iteration }}</td>
+                        <td class="px-6 py-3 font-medium">{{ $user->name }}</td>
+                        <td class="px-6 py-3 text-gray-400">{{ $user->email }}</td>
+                        <td class="px-6 py-3">
+                            @if($user->role === 'admin')
+                                <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full dark:bg-purple-900 dark:text-purple-200">Admin</span>
+                            @else
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-200">Cashier</span>
+                            @endif
                         </td>
-                        <td class="px-6 py-4" x-text="user.email"></td>
-                        <td class="px-6 py-4">
-                            <span :class="user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'"
-                                  class="text-xs font-medium px-2.5 py-0.5 rounded-full capitalize" x-text="user.role"></span>
-                        </td>
-                        <td class="px-6 py-4" x-text="new Date(user.created_at).toLocaleDateString()"></td>
-                        <td class="px-6 py-4 flex gap-2">
-                            <button @click="openEditModal(user)" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</button>
-                            <button @click="deleteUser(user.id)" class="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</button>
+                        <td class="px-6 py-3 text-gray-400">{{ $user->created_at->format('d M Y') }}</td>
+                        <td class="px-6 py-3 flex gap-2">
+                            <button @click="editing = {{ Js::from(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role]) }}; showModal = true"
+                                class="px-3 py-1 text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded dark:bg-yellow-900 dark:text-yellow-200">
+                                Edit
+                            </button>
+                            @if($user->id !== auth()->id())
+                            <form method="POST" action="{{ route('users.destroy', $user) }}"
+                                onsubmit="return confirm('Delete this user?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-800 rounded dark:bg-red-900 dark:text-red-200">
+                                    Delete
+                                </button>
+                            </form>
+                            @endif
                         </td>
                     </tr>
-                </template>
-            </tbody>
-        </table>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-400">No users found</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($users->hasPages())
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            {{ $users->links() }}
+        </div>
+        @endif
     </div>
 
-    <!-- Create/Edit Modal -->
-    <div x-show="showModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4" @click.stop>
-            <div class="flex items-center justify-between p-4 border-b dark:border-gray-600">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white" x-text="editingId ? 'Edit User' : 'Add User'"></h3>
-                <button @click="showModal = false" class="text-gray-400 hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
+    {{-- Create / Edit Modal --}}
+    <div x-show="showModal" x-transition.opacity
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        @keydown.escape.window="showModal = false; editing = null">
+
+        <div @click.stop class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white"
+                    x-text="editing ? 'Edit User' : 'New User'"></h3>
+                <button @click="showModal = false; editing = null"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
                 </button>
             </div>
-            <form @submit.prevent="saveUser()" class="p-4 space-y-4">
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name *</label>
-                    <input type="text" x-model="form.name" required
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+
+            <form method="POST"
+                :action="editing ? '/users/' + editing.id : '{{ route('users.store') }}'">
+                @csrf
+                <input type="hidden" name="_method" :value="editing ? 'PUT' : 'POST'">
+
+                <div class="p-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="name" :value="editing ? editing.name : ''"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email <span class="text-red-500">*</span></label>
+                        <input type="email" name="email" :value="editing ? editing.email : ''"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Password <span x-show="!editing" class="text-red-500">*</span>
+                            <span x-show="editing" class="text-gray-400 text-xs">(leave blank to keep)</span>
+                        </label>
+                        <input type="password" name="password"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            :required="!editing">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                        <input type="password" name="password_confirmation"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role <span class="text-red-500">*</span></label>
+                        <select name="role" required
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            x-effect="$el.value = editing ? editing.role : 'cashier'">
+                            <option value="cashier">Cashier</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email *</label>
-                    <input type="email" x-model="form.email" required
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password <span x-text="editingId ? '(leave blank to keep)' : '*'"></span></label>
-                    <input type="password" x-model="form.password" :required="!editingId"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role *</label>
-                    <select x-model="form.role" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                        <option value="cashier">Cashier</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <div x-show="formError" class="p-3 text-sm text-red-500 bg-red-50 rounded-lg" x-text="formError"></div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" @click="showModal = false"
-                            class="py-2.5 px-5 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Cancel</button>
-                    <button type="submit" :disabled="saving"
-                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50">
-                        <span x-show="saving">Saving...</span><span x-show="!saving">Save</span>
+
+                <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" @click="showModal = false; editing = null"
+                        class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        Save
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
 </div>
-
-<script>
-function usersPage() {
-    return {
-        users: [], loading: true, showModal: false, editingId: null, saving: false, formError: '',
-        form: { name: '', email: '', password: '', role: 'cashier' },
-
-        async load() {
-            this.loading = true;
-            try {
-                const res = await fetch('/api/users', { headers: { 'Accept': 'application/json' } });
-                const data = await res.json();
-                this.users = data.data ?? data;
-            } catch (e) { console.error(e); }
-            this.loading = false;
-        },
-
-        openCreateModal() {
-            this.editingId = null;
-            this.form = { name: '', email: '', password: '', role: 'cashier' };
-            this.formError = ''; this.showModal = true;
-        },
-
-        openEditModal(user) {
-            this.editingId = user.id;
-            this.form = { name: user.name, email: user.email, password: '', role: user.role };
-            this.formError = ''; this.showModal = true;
-        },
-
-        async saveUser() {
-            this.saving = true; this.formError = '';
-            try {
-                const payload = { ...this.form };
-                if (!payload.password) delete payload.password;
-                const url = this.editingId ? '/api/users/' + this.editingId : '/api/users';
-                const method = this.editingId ? 'PUT' : 'POST';
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) { this.showModal = false; this.load(); }
-                else { const e = await res.json(); this.formError = e.message ?? 'Error saving user'; }
-            } catch (e) { this.formError = 'Network error'; }
-            this.saving = false;
-        },
-
-        async deleteUser(id) {
-            if (!confirm('Delete this user?')) return;
-            await fetch('/api/users/' + id, { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content } });
-            this.load();
-        }
-    }
-}
-</script>
 @endsection

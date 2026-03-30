@@ -4,213 +4,253 @@
 @section('breadcrumb', 'Point of Sale')
 
 @section('content')
-<div x-data="posPage()" x-init="loadItems()" class="flex flex-col lg:flex-row gap-4 h-full">
+<div x-data="posApp()" class="flex flex-col lg:flex-row gap-4 h-full">
 
-    <!-- Items Panel -->
-    <div class="flex-1">
-        <!-- Search & Filters -->
-        <div class="flex flex-wrap gap-3 mb-4">
-            <input type="text" x-model="search" @input.debounce.400ms="loadItems()"
-                   placeholder="Search items..."
-                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full md:w-64 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-            <select x-model="categoryFilter" @change="loadItems()"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                <option value="">All Categories</option>
-                <template x-for="cat in categories" :key="cat.id">
-                    <option :value="cat.id" x-text="cat.name"></option>
-                </template>
-            </select>
+    {{-- Left: Product Grid --}}
+    <div class="flex-1 space-y-4">
+        {{-- Category Filter --}}
+        <div class="flex gap-2 flex-wrap">
+            <button @click="selectedCategory = null"
+                :class="selectedCategory === null ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border dark:border-gray-600'"
+                class="px-3 py-1.5 text-sm rounded-lg">
+                All
+            </button>
+            @foreach($categories as $cat)
+            <button @click="selectedCategory = {{ $cat->id }}"
+                :class="selectedCategory === {{ $cat->id }} ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border dark:border-gray-600'"
+                class="px-3 py-1.5 text-sm rounded-lg">
+                {{ $cat->name }}
+            </button>
+            @endforeach
         </div>
 
-        <!-- Items Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            <template x-if="loadingItems">
-                <template x-for="i in 8" :key="i">
-                    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 animate-pulse shadow">
-                        <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
-                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    </div>
-                </template>
-            </template>
-            <template x-for="item in items" :key="item.id">
+        {{-- Search --}}
+        <input type="text" x-model="search" placeholder="Search items..."
+            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        {{-- Items Grid --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+            <template x-for="item in filteredItems" :key="item.id">
                 <div @click="addToCart(item)"
-                     :class="item.stock_quantity === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-blue-500'"
-                     class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-transparent transition-all">
-                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg h-20 flex items-center justify-center mb-2 text-3xl">
-                        🛍️
+                    class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 cursor-pointer hover:shadow-md hover:border-blue-400 border border-transparent transition">
+                    <p class="font-medium text-sm text-gray-800 dark:text-white truncate" x-text="item.name"></p>
+                    <p class="text-xs text-gray-400 mt-0.5" x-text="item.category ? item.category.name : ''"></p>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400" x-text="'Rp ' + Number(item.price).toLocaleString('id-ID')"></span>
+                        <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400" x-text="'Stk: ' + item.stock"></span>
                     </div>
-                    <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="item.name"></h3>
-                    <p class="text-blue-600 dark:text-blue-400 font-semibold text-sm" x-text="'$' + parseFloat(item.price).toFixed(2)"></p>
-                    <p class="text-xs text-gray-400" x-text="'Stock: ' + item.stock_quantity"></p>
                 </div>
             </template>
-            <template x-if="!loadingItems && items.length === 0">
-                <div class="col-span-full py-8 text-center text-gray-400">No items found</div>
+            <template x-if="filteredItems.length === 0">
+                <div class="col-span-4 py-12 text-center text-gray-400 text-sm">No items found</div>
             </template>
         </div>
     </div>
 
-    <!-- Cart Panel -->
-    <div class="w-full lg:w-80 bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col">
-        <div class="p-4 border-b dark:border-gray-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Current Order</h2>
-        </div>
+    {{-- Right: Cart --}}
+    <div class="w-full lg:w-96 flex flex-col gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col" style="min-height:400px">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h2 class="font-semibold text-gray-800 dark:text-white">Cart</h2>
+                <button @click="clearCart()" class="text-xs text-red-500 hover:text-red-700" x-show="cart.length > 0">Clear</button>
+            </div>
 
-        <!-- Cart Items -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-2 min-h-0 max-h-96 lg:max-h-full">
-            <template x-if="cart.length === 0">
-                <div class="py-8 text-center text-gray-400 text-sm">Cart is empty. Pick items to add.</div>
-            </template>
-            <template x-for="(cartItem, index) in cart" :key="cartItem.id">
-                <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div class="flex-1 min-w-0 me-2">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="cartItem.name"></p>
-                        <p class="text-xs text-gray-400" x-text="'$' + parseFloat(cartItem.price).toFixed(2)"></p>
+            {{-- Cart Items --}}
+            <div class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 max-h-72">
+                <template x-for="(line, idx) in cart" :key="idx">
+                    <div class="px-4 py-2 flex items-center gap-2">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white truncate" x-text="line.name"></p>
+                            <p class="text-xs text-gray-400" x-text="'Rp ' + Number(line.price).toLocaleString('id-ID')"></p>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button @click="decreaseQty(idx)" class="w-6 h-6 rounded bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-sm font-bold flex items-center justify-center hover:bg-gray-200">-</button>
+                            <span class="w-6 text-center text-sm dark:text-white" x-text="line.quantity"></span>
+                            <button @click="increaseQty(idx)" class="w-6 h-6 rounded bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-sm font-bold flex items-center justify-center hover:bg-gray-200">+</button>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-800 dark:text-white w-20 text-right"
+                            x-text="'Rp ' + Number(line.price * line.quantity).toLocaleString('id-ID')"></p>
+                        <button @click="removeFromCart(idx)" class="text-gray-300 hover:text-red-500 ml-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <button @click="decreaseQty(index)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-500 bg-white dark:bg-gray-600 rounded border">-</button>
-                        <span class="w-8 text-center text-sm font-medium text-gray-900 dark:text-white" x-text="cartItem.qty"></span>
-                        <button @click="increaseQty(index)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-green-500 bg-white dark:bg-gray-600 rounded border">+</button>
-                        <button @click="removeFromCart(index)" class="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 ms-1">✕</button>
-                    </div>
+                </template>
+                <template x-if="cart.length === 0">
+                    <div class="p-8 text-center text-gray-400 text-sm">Cart is empty — click items to add</div>
+                </template>
+            </div>
+
+            {{-- Totals --}}
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                    <span>Subtotal</span>
+                    <span x-text="'Rp ' + Number(subtotal).toLocaleString('id-ID')"></span>
                 </div>
-            </template>
-        </div>
-
-        <!-- Cart Footer -->
-        <div class="p-4 border-t dark:border-gray-700 space-y-3">
-            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                <span>Subtotal</span>
-                <span x-text="'$' + subtotal.toFixed(2)"></span>
-            </div>
-            <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
-                <span>Total</span>
-                <span x-text="'$' + subtotal.toFixed(2)"></span>
-            </div>
-
-            <!-- Payment Method -->
-            <div>
-                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Payment Method</label>
-                <select x-model="paymentMethod"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                    <option value="qr">QR / Digital</option>
-                </select>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600 dark:text-gray-300">Discount</span>
+                    <input type="number" x-model.number="discount" min="0"
+                        class="w-28 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm text-right bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600 dark:text-gray-300">Tax (%)</span>
+                    <input type="number" x-model.number="taxPercent" min="0" max="100"
+                        class="w-28 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm text-right bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-between font-bold text-base text-gray-800 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-2">
+                    <span>Total</span>
+                    <span x-text="'Rp ' + Number(total).toLocaleString('id-ID')"></span>
+                </div>
             </div>
 
-            <!-- Cash received (for cash payment) -->
-            <div x-show="paymentMethod === 'cash'">
-                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Cash Received</label>
-                <input type="number" step="0.01" x-model="cashReceived" min="0"
-                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                <p x-show="cashReceived >= subtotal && subtotal > 0" class="text-sm text-green-600 mt-1">
-                    Change: $<span x-text="(cashReceived - subtotal).toFixed(2)"></span>
-                </p>
+            {{-- Payment --}}
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Payment Method</label>
+                    <select x-model="paymentMethod"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="transfer">Transfer</option>
+                        <option value="qris">QRIS</option>
+                    </select>
+                </div>
+                <div x-show="paymentMethod === 'cash'">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Amount Paid</label>
+                    <input type="number" x-model.number="amountPaid" min="0"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-green-600 mt-1" x-show="amountPaid >= total && total > 0"
+                        x-text="'Change: Rp ' + Number(amountPaid - total).toLocaleString('id-ID')"></p>
+                </div>
+
+                {{-- Error --}}
+                <p x-show="errorMsg" x-text="errorMsg" class="text-xs text-red-500"></p>
+
+                <button @click="checkout()"
+                    :disabled="cart.length === 0 || processing"
+                    class="w-full py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg text-sm">
+                    <span x-show="!processing">Process Order</span>
+                    <span x-show="processing">Processing...</span>
+                </button>
             </div>
-
-            <div x-show="orderError" class="p-2 text-sm text-red-500 bg-red-50 rounded" x-text="orderError"></div>
-
-            <!-- Buttons -->
-            <button @click="clearCart()" :disabled="cart.length === 0"
-                    class="w-full py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-gray-600">
-                Clear Cart
-            </button>
-            <button @click="placeOrder()" :disabled="cart.length === 0 || placing"
-                    class="w-full py-2.5 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 disabled:opacity-50">
-                <span x-show="placing">Processing...</span>
-                <span x-show="!placing">Place Order</span>
-            </button>
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div x-show="orderSuccess" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6 text-center">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Order Placed!</h3>
-            <p class="text-gray-500 dark:text-gray-400 mb-4">Order #<span x-text="lastOrderId"></span> created successfully.</p>
-            <button @click="orderSuccess = false"
-                    class="w-full py-2.5 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800">
-                New Order
-            </button>
+</div>
+
+{{-- Success Receipt Modal --}}
+<div x-show="receipt" x-transition.opacity
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6 text-center space-y-3">
+        <div class="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto">
+            <svg class="w-8 h-8 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
         </div>
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white">Order Complete!</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="receipt ? 'Order #' + receipt.id + ' — Rp ' + Number(receipt.total).toLocaleString('id-ID') : ''"></p>
+        <div x-show="receipt && receipt.change > 0" class="text-sm text-green-600 font-semibold"
+            x-text="'Change: Rp ' + (receipt ? Number(receipt.change).toLocaleString('id-ID') : '')"></div>
+        <button @click="receipt = null; clearCart()"
+            class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
+            New Order
+        </button>
     </div>
 </div>
 
 <script>
-function posPage() {
+function posApp() {
     return {
-        items: [], categories: [], cart: [], search: '', categoryFilter: '',
-        loadingItems: true, placing: false, orderError: '', orderSuccess: false, lastOrderId: null,
-        paymentMethod: 'cash', cashReceived: 0,
+        allItems: @json($items),
+        search: '',
+        selectedCategory: null,
+        cart: [],
+        discount: 0,
+        taxPercent: 0,
+        paymentMethod: 'cash',
+        amountPaid: 0,
+        processing: false,
+        errorMsg: '',
+        receipt: null,
 
-        get subtotal() { return this.cart.reduce((s, i) => s + i.price * i.qty, 0); },
+        get filteredItems() {
+            return this.allItems.filter(item => {
+                const matchCat = this.selectedCategory === null || item.category_id === this.selectedCategory;
+                const matchSearch = !this.search || item.name.toLowerCase().includes(this.search.toLowerCase())
+                    || (item.barcode && item.barcode.includes(this.search));
+                return matchCat && matchSearch;
+            });
+        },
 
-        async loadItems() {
-            this.loadingItems = true;
-            try {
-                const params = new URLSearchParams({ per_page: 50, is_active: 1 });
-                if (this.search) params.append('search', this.search);
-                if (this.categoryFilter) params.append('category_id', this.categoryFilter);
-                const [itemsRes, catsRes] = await Promise.all([
-                    fetch('/api/items?' + params, { headers: { 'Accept': 'application/json' } }),
-                    this.categories.length ? Promise.resolve(null) : fetch('/api/categories?per_page=100', { headers: { 'Accept': 'application/json' } })
-                ]);
-                const data = await itemsRes.json();
-                this.items = (data.data ?? data).filter(i => i.is_active);
-                if (catsRes) { const cd = await catsRes.json(); this.categories = cd.data ?? cd; }
-            } catch (e) { console.error(e); }
-            this.loadingItems = false;
+        get subtotal() {
+            return this.cart.reduce((sum, l) => sum + l.price * l.quantity, 0);
+        },
+        get taxAmount() {
+            return Math.round((this.subtotal - this.discount) * (this.taxPercent / 100));
+        },
+        get total() {
+            return Math.max(0, this.subtotal - this.discount + this.taxAmount);
         },
 
         addToCart(item) {
-            if (item.stock_quantity === 0) return;
-            const existing = this.cart.find(c => c.id === item.id);
+            const existing = this.cart.find(l => l.id === item.id);
             if (existing) {
-                if (existing.qty < item.stock_quantity) existing.qty++;
+                if (existing.quantity < item.stock) existing.quantity++;
             } else {
-                this.cart.push({ id: item.id, name: item.name, price: parseFloat(item.price), qty: 1, stock: item.stock_quantity });
+                this.cart.push({ id: item.id, name: item.name, price: parseFloat(item.price), quantity: 1, stock: item.stock });
             }
         },
+        increaseQty(idx) {
+            const line = this.cart[idx];
+            if (line.quantity < line.stock) line.quantity++;
+        },
+        decreaseQty(idx) {
+            if (this.cart[idx].quantity > 1) this.cart[idx].quantity--;
+            else this.removeFromCart(idx);
+        },
+        removeFromCart(idx) { this.cart.splice(idx, 1); },
+        clearCart() { this.cart = []; this.discount = 0; this.taxPercent = 0; this.amountPaid = 0; this.errorMsg = ''; },
 
-        increaseQty(index) { const c = this.cart[index]; if (c.qty < c.stock) c.qty++; },
-        decreaseQty(index) { if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
-        removeFromCart(index) { this.cart.splice(index, 1); },
-        clearCart() { this.cart = []; this.orderError = ''; },
-
-        async placeOrder() {
+        async checkout() {
+            this.errorMsg = '';
             if (this.cart.length === 0) return;
-            this.placing = true; this.orderError = '';
+            if (this.paymentMethod === 'cash' && this.amountPaid < this.total) {
+                this.errorMsg = 'Amount paid is less than total';
+                return;
+            }
+            this.processing = true;
             try {
-                const payload = {
-                    items: this.cart.map(c => ({ item_id: c.id, quantity: c.qty })),
-                    payment_method: this.paymentMethod,
-                    amount_paid: this.paymentMethod === 'cash' ? parseFloat(this.cashReceived) : this.subtotal
-                };
                 const res = await fetch('/api/orders', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify(payload)
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || ''),
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        items: this.cart.map(l => ({ item_id: l.id, quantity: l.quantity })),
+                        payment_method: this.paymentMethod,
+                        payment_amount: this.amountPaid || this.total,
+                        discount: this.discount,
+                        tax: this.taxAmount,
+                    })
                 });
-                if (res.ok) {
-                    const order = await res.json();
-                    this.lastOrderId = order.id ?? order.data?.id;
-                    this.clearCart();
-                    this.orderSuccess = true;
-                    this.cashReceived = 0;
-                    this.loadItems();
+                const data = await res.json();
+                if (!res.ok) {
+                    this.errorMsg = data.message || 'Order failed';
                 } else {
-                    const e = await res.json();
-                    this.orderError = e.message ?? 'Failed to place order';
+                    const order = data.data ?? data;
+                    this.receipt = { id: order.id, total: this.total, change: Math.max(0, this.amountPaid - this.total) };
                 }
-            } catch (e) { this.orderError = 'Network error'; }
-            this.placing = false;
+            } catch(e) {
+                this.errorMsg = 'Network error, please try again';
+            } finally {
+                this.processing = false;
+            }
         }
-    }
+    };
 }
 </script>
 @endsection

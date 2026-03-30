@@ -44,20 +44,4 @@ class Item extends Model implements HasMedia
     {
         return $this->hasMany(StockMovement::class);
     }
-}
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function orderItems(): HasMany
-    {
-        return $this->hasMany(OrderItem::class);
-    }
-
-    public function stockMovements(): HasMany
-    {
-        return $this->hasMany(StockMovement::class);
-    }
-}
+} 

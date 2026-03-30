@@ -33,10 +33,4 @@ class Category extends Model implements HasMedia
     {
         return $this->hasMany(Item::class);
     }
-}
-
-    public function items(): HasMany
-    {
-        return $this->hasMany(Item::class);
-    }
-}
+} 

@@ -4,162 +4,128 @@
 @section('breadcrumb', 'Dashboard')
 
 @section('content')
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-    <p class="text-gray-500 dark:text-gray-400">Welcome back, {{ auth()->user()->name }}!</p>
-</div>
+<div class="space-y-6">
 
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="dashboard-stats">
-    <!-- Cards will be populated via Alpine.js + API -->
-    <div x-data="dashboardStats()" x-init="load()" class="contents">
-        <template x-if="loading">
-            <template x-for="i in 4" :key="i">
-                <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-6 animate-pulse">
-                    <div class="h-4 bg-gray-200 rounded dark:bg-gray-700 w-1/2 mb-4"></div>
-                    <div class="h-8 bg-gray-200 rounded dark:bg-gray-700 w-1/3"></div>
-                </div>
-            </template>
-        </template>
-
-        <template x-if="!loading">
-            <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-6">
-                <div class="flex items-center">
-                    <div class="inline-flex items-center justify-center p-3 bg-blue-100 rounded-full dark:bg-blue-900 me-4">
-                        <svg class="w-6 h-6 text-blue-700 dark:text-blue-300" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.077 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.077-2.354-1.253V5z" clip-rule="evenodd"/></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Today's Revenue</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="'$' + (stats.today_revenue ?? 0).toLocaleString()"></p>
-                    </div>
-                </div>
+    {{-- Stats Cards --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
             </div>
-        </template>
-
-        <template x-if="!loading">
-            <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-6">
-                <div class="flex items-center">
-                    <div class="inline-flex items-center justify-center p-3 bg-green-100 rounded-full dark:bg-green-900 me-4">
-                        <svg class="w-6 h-6 text-green-700 dark:text-green-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Today's Orders</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="stats.today_orders ?? 0"></p>
-                    </div>
-                </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Today's Sales</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">Rp {{ number_format($stats['today_sales']) }}</p>
             </div>
-        </template>
+        </div>
 
-        <template x-if="!loading">
-            <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-6">
-                <div class="flex items-center">
-                    <div class="inline-flex items-center justify-center p-3 bg-yellow-100 rounded-full dark:bg-yellow-900 me-4">
-                        <svg class="w-6 h-6 text-yellow-700 dark:text-yellow-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Items</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="stats.total_items ?? 0"></p>
-                    </div>
-                </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div class="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
             </div>
-        </template>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Today's Orders</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ $stats['today_orders'] }}</p>
+            </div>
+        </div>
 
-        <template x-if="!loading">
-            <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-6">
-                <div class="flex items-center">
-                    <div class="inline-flex items-center justify-center p-3 bg-purple-100 rounded-full dark:bg-purple-900 me-4">
-                        <svg class="w-6 h-6 text-purple-700 dark:text-purple-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="stats.total_customers ?? 0"></p>
-                    </div>
-                </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                <svg class="w-6 h-6 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
             </div>
-        </template>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Monthly Sales</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">Rp {{ number_format($stats['month_sales']) }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+                <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Items</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ $stats['total_items'] }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div class="p-3 bg-red-100 dark:bg-red-900 rounded-full">
+                <svg class="w-6 h-6 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Low Stock Items</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ $stats['low_stock_items'] }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 flex items-center gap-4">
+            <div class="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-full">
+                <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Users</p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ $stats['total_users'] }}</p>
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- Recent Orders -->
-<div class="bg-white shadow rounded-lg dark:bg-gray-800 p-6" x-data="recentOrders()" x-init="load()">
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Orders</h2>
-        <a href="{{ route('orders.index') }}" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">View all</a>
-    </div>
-    <div class="relative overflow-x-auto">
-        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="px-6 py-3">Order #</th>
-                    <th scope="col" class="px-6 py-3">Items</th>
-                    <th scope="col" class="px-6 py-3">Total</th>
-                    <th scope="col" class="px-6 py-3">Status</th>
-                    <th scope="col" class="px-6 py-3">Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template x-if="loading">
-                    <tr x-for="i in 5" :key="i">
-                        <td colspan="5" class="px-6 py-4">
-                            <div class="h-4 bg-gray-200 rounded dark:bg-gray-700 animate-pulse"></div>
-                        </td>
-                    </tr>
-                </template>
-                <template x-if="!loading && orders.length === 0">
+    {{-- Recent Orders --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Orders</h2>
+            <a href="{{ route('orders.index') }}" class="text-sm text-blue-600 hover:underline">View all</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500 dark:text-gray-400">
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-400">No recent orders</td>
+                        <th class="px-6 py-3">#</th>
+                        <th class="px-6 py-3">Cashier</th>
+                        <th class="px-6 py-3">Items</th>
+                        <th class="px-6 py-3">Total</th>
+                        <th class="px-6 py-3">Status</th>
+                        <th class="px-6 py-3">Date</th>
                     </tr>
-                </template>
-                <template x-for="order in orders" :key="order.id">
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white" x-text="'#' + order.id"></td>
-                        <td class="px-6 py-4" x-text="order.order_items_count ?? '-'"></td>
-                        <td class="px-6 py-4" x-text="'$' + parseFloat(order.total_amount).toFixed(2)"></td>
-                        <td class="px-6 py-4">
-                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300" x-text="order.status"></span>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($recentOrders as $order)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-3 font-medium">#{{ $order->id }}</td>
+                        <td class="px-6 py-3">{{ $order->user?->name ?? 'Guest' }}</td>
+                        <td class="px-6 py-3">{{ $order->items->count() }} item(s)</td>
+                        <td class="px-6 py-3 font-semibold">Rp {{ number_format($order->total) }}</td>
+                        <td class="px-6 py-3">
+                            @if($order->status === 'completed')
+                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-200">Completed</span>
+                            @elseif($order->status === 'pending')
+                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full dark:bg-yellow-900 dark:text-yellow-200">Pending</span>
+                            @else
+                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full dark:bg-red-900 dark:text-red-200">{{ ucfirst($order->status) }}</span>
+                            @endif
                         </td>
-                        <td class="px-6 py-4" x-text="new Date(order.created_at).toLocaleDateString()"></td>
+                        <td class="px-6 py-3 text-gray-400">{{ $order->created_at->format('d M Y H:i') }}</td>
                     </tr>
-                </template>
-            </tbody>
-        </table>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-400">No orders yet</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
+
 </div>
-
-<script>
-function dashboardStats() {
-    return {
-        stats: {},
-        loading: true,
-        async load() {
-            try {
-                const res = await fetch('/api/dashboard', {
-                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                if (res.ok) this.stats = await res.json();
-            } catch (e) { console.error(e); }
-            this.loading = false;
-        }
-    }
-}
-
-function recentOrders() {
-    return {
-        orders: [],
-        loading: true,
-        async load() {
-            try {
-                const res = await fetch('/api/orders?per_page=5', {
-                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    this.orders = data.data ?? data;
-                }
-            } catch (e) { console.error(e); }
-            this.loading = false;
-        }
-    }
-}
-</script>
 @endsection

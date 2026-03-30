@@ -4,157 +4,130 @@
 @section('breadcrumb', 'Stock Management')
 
 @section('content')
-<div x-data="stockPage()" x-init="load()">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Stock Management</h1>
-        <button @click="openModal()" type="button"
-                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-            + Stock Movement
+<div x-data="{ showModal: false }" class="space-y-4">
+
+    {{-- Header --}}
+    <div class="flex justify-between items-center">
+        <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Stock Movements</h1>
+        <button @click="showModal = true"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
+            + Record Movement
         </button>
     </div>
 
-    <!-- Table -->
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th class="px-6 py-3">Item</th>
-                    <th class="px-6 py-3">Type</th>
-                    <th class="px-6 py-3">Quantity</th>
-                    <th class="px-6 py-3">Note</th>
-                    <th class="px-6 py-3">User</th>
-                    <th class="px-6 py-3">Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template x-if="loading">
-                    <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>
-                </template>
-                <template x-if="!loading && movements.length === 0">
-                    <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No stock movements found</td></tr>
-                </template>
-                <template x-for="m in movements" :key="m.id">
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white" x-text="m.item?.name ?? '-'"></td>
-                        <td class="px-6 py-4">
-                            <span :class="m.type === 'in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
-                                  class="text-xs font-medium px-2.5 py-0.5 rounded-full uppercase" x-text="m.type"></span>
-                        </td>
-                        <td class="px-6 py-4" x-text="m.quantity"></td>
-                        <td class="px-6 py-4" x-text="m.note ?? '-'"></td>
-                        <td class="px-6 py-4" x-text="m.user?.name ?? '-'"></td>
-                        <td class="px-6 py-4" x-text="new Date(m.created_at).toLocaleString()"></td>
+    {{-- Table --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500 dark:text-gray-400">
+                    <tr>
+                        <th class="px-6 py-3">#</th>
+                        <th class="px-6 py-3">Item</th>
+                        <th class="px-6 py-3">Type</th>
+                        <th class="px-6 py-3">Quantity</th>
+                        <th class="px-6 py-3">Note</th>
+                        <th class="px-6 py-3">By</th>
+                        <th class="px-6 py-3">Date</th>
                     </tr>
-                </template>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="flex items-center justify-between mt-4" x-show="meta.last_page > 1">
-        <p class="text-sm text-gray-700 dark:text-gray-400">Page <span x-text="page"></span> of <span x-text="meta.last_page"></span></p>
-        <div class="flex gap-2">
-            <button @click="prevPage()" :disabled="page <= 1"
-                    class="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">Previous</button>
-            <button @click="nextPage()" :disabled="page >= meta.last_page"
-                    class="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">Next</button>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($movements as $m)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-3">{{ $loop->iteration }}</td>
+                        <td class="px-6 py-3 font-medium">{{ $m->item?->name ?? 'Deleted Item' }}</td>
+                        <td class="px-6 py-3">
+                            @if($m->type === 'in')
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-200">Stock In</span>
+                            @else
+                                <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full dark:bg-red-900 dark:text-red-200">Stock Out</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-3 font-semibold {{ $m->type === 'in' ? 'text-green-600' : 'text-red-500' }}">
+                            {{ $m->type === 'in' ? '+' : '-' }}{{ $m->quantity }}
+                        </td>
+                        <td class="px-6 py-3 text-gray-400">{{ $m->note ?? '-' }}</td>
+                        <td class="px-6 py-3">{{ $m->user?->name ?? '-' }}</td>
+                        <td class="px-6 py-3 text-gray-400 whitespace-nowrap">{{ $m->created_at->format('d M Y H:i') }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-400">No movements recorded</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+        @if($movements->hasPages())
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            {{ $movements->links() }}
+        </div>
+        @endif
     </div>
 
-    <!-- Add Movement Modal -->
-    <div x-show="showModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4" @click.stop>
-            <div class="flex items-center justify-between p-4 border-b dark:border-gray-600">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Add Stock Movement</h3>
-                <button @click="showModal = false" class="text-gray-400 hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
+    {{-- Add Movement Modal --}}
+    <div x-show="showModal" x-transition.opacity
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        @keydown.escape.window="showModal = false">
+
+        <div @click.stop class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Record Stock Movement</h3>
+                <button @click="showModal = false"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
                 </button>
             </div>
-            <form @submit.prevent="saveMovement()" class="p-4 space-y-4">
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Item *</label>
-                    <select x-model="form.item_id" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                        <option value="">Select item...</option>
-                        <template x-for="item in items" :key="item.id">
-                            <option :value="item.id" x-text="item.name + ' (Stock: ' + item.stock_quantity + ')'"></option>
-                        </template>
-                    </select>
+
+            <form method="POST" action="{{ route('stock.store') }}">
+                @csrf
+                <div class="p-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Item <span class="text-red-500">*</span></label>
+                        <select name="item_id" required
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select item</option>
+                            @foreach($items as $item)
+                            <option value="{{ $item->id }}">{{ $item->name }} (Stock: {{ $item->stock }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type <span class="text-red-500">*</span></label>
+                            <select name="type" required
+                                class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="in">Stock In</option>
+                                <option value="out">Stock Out</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity <span class="text-red-500">*</span></label>
+                            <input type="number" name="quantity" min="1" required
+                                class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note</label>
+                        <textarea name="note" rows="2"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
                 </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Type *</label>
-                    <select x-model="form.type" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                        <option value="in">Stock In</option>
-                        <option value="out">Stock Out</option>
-                        <option value="adjustment">Adjustment</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Quantity *</label>
-                    <input type="number" min="1" x-model="form.quantity" required
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Note</label>
-                    <input type="text" x-model="form.note"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                </div>
-                <div x-show="formError" class="p-3 text-sm text-red-500 bg-red-50 rounded-lg" x-text="formError"></div>
-                <div class="flex justify-end gap-2 pt-2">
+
+                <div class="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
                     <button type="button" @click="showModal = false"
-                            class="py-2.5 px-5 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Cancel</button>
-                    <button type="submit" :disabled="saving"
-                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50">
-                        <span x-show="saving">Saving...</span><span x-show="!saving">Save</span>
+                        class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        Save
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
 </div>
-
-<script>
-function stockPage() {
-    return {
-        movements: [], items: [], meta: {}, page: 1, loading: true,
-        showModal: false, saving: false, formError: '',
-        form: { item_id: '', type: 'in', quantity: 1, note: '' },
-
-        async load() {
-            this.loading = true;
-            try {
-                const [movRes, itemRes] = await Promise.all([
-                    fetch('/api/stock-movements?page=' + this.page + '&per_page=15', { headers: { 'Accept': 'application/json' } }),
-                    this.items.length ? Promise.resolve(null) : fetch('/api/items?per_page=200', { headers: { 'Accept': 'application/json' } })
-                ]);
-                const data = await movRes.json();
-                this.movements = data.data ?? data;
-                this.meta = data.meta ?? {};
-                if (itemRes) { const d = await itemRes.json(); this.items = d.data ?? d; }
-            } catch (e) { console.error(e); }
-            this.loading = false;
-        },
-
-        openModal() { this.form = { item_id: '', type: 'in', quantity: 1, note: '' }; this.formError = ''; this.showModal = true; },
-
-        async saveMovement() {
-            this.saving = true; this.formError = '';
-            try {
-                const res = await fetch('/api/stock-movements', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify(this.form)
-                });
-                if (res.ok) { this.showModal = false; this.load(); }
-                else { const e = await res.json(); this.formError = e.message ?? 'Error saving'; }
-            } catch (e) { this.formError = 'Network error'; }
-            this.saving = false;
-        },
-
-        prevPage() { if (this.page > 1) { this.page--; this.load(); } },
-        nextPage() { if (this.page < this.meta.last_page) { this.page++; this.load(); } }
-    }
-}
-</script>
 @endsection
