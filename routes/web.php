@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
 
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::post('/api/orders', [OrderController::class, 'store'])->name('api.orders.store');
 
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

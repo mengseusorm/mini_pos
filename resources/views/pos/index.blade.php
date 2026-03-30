@@ -137,11 +137,9 @@
         </div>
     </div>
 
-</div>
-
-{{-- Success Receipt Modal --}}
-<div x-show="receipt" x-transition.opacity
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    {{-- Success Receipt Modal --}}
+    <div x-show="receipt" x-transition.opacity
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6 text-center space-y-3">
         <div class="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto">
             <svg class="w-8 h-8 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,11 +150,13 @@
         <p class="text-sm text-gray-500 dark:text-gray-400" x-text="receipt ? 'Order #' + receipt.id + ' — {{ $currency }} ' + Number(receipt.total).toLocaleString('id-ID') : ''"></p>
         <div x-show="receipt && receipt.change > 0" class="text-sm text-green-600 font-semibold"
             x-text="'Change: {{ $currency }} ' + (receipt ? Number(receipt.change).toLocaleString('id-ID') : '')"></div>
-        <button @click="receipt = null; clearCart()"
+        <button @click="receipt = null"
             class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
             New Order
         </button>
     </div>
+    </div>
+
 </div>
 
 <script>
@@ -243,6 +243,7 @@ function posApp() {
                 } else {
                     const order = data.data ?? data;
                     this.receipt = { id: order.id, total: this.total, change: Math.max(0, this.amountPaid - this.total) };
+                    this.clearCart();
                 }
             } catch(e) {
                 this.errorMsg = 'Network error, please try again';
